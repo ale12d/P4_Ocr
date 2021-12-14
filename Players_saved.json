@@ -1,0 +1,31 @@
+[
+  {
+    "surname": "Lis",
+    "first_name": "Florence",
+    "date_of_birth": "01-02-1995",
+    "ranking": "1500",
+    "sex": "women"
+  },
+  {
+    "surname": "Foret",
+    "first_name": "Didier",
+    "date_of_birth": "27-11-1992",
+    "ranking": "1200",
+    "sex": "male"
+  },
+  {
+    "surname": "Dupuit",
+    "first_name": "Bernard",
+    "date_of_birth": "21-02-1985",
+    "ranking": "1125",
+    "sex": "male"
+  },
+  {
+    "surname": "Dupont",
+    "first_name": "Jean",
+    "date_of_birth": "02-07-1978",
+    "ranking": "900",
+    "sex": "male"
+  }
+  
+]
