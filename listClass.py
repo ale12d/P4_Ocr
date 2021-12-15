@@ -7,19 +7,19 @@ class Tournament:
 
     NB_PLAYERS = 8
 
-    def __init__(self, name_tournament=None, place_tournament=None, date_tournament =None, nb_round = 4):
+    def __init__(self, name_tournament=None, place_tournament=None, date_tournament=None, nb_round=4):
         self.name_tournament = name_tournament
         self.place_tournament = place_tournament
         self.date_tournament = date_tournament
         self.nb_round = nb_round
 
-    def save_tournament(self, name_tournament, place_tournament, date_tournament, nb_round):
+    def save_tournament(self):
 
         serialized_tournament = [{
-            'name_tournament': name_tournament,
-            'place_tournament': place_tournament,
-            'date_tournament': date_tournament,
-            'nb_round': nb_round,
+            'name_tournament': self.name_tournament,
+            'place_tournament': self.place_tournament,
+            'date_tournament': self.date_tournament,
+            'nb_round': self.nb_round,
             #'players': players
         }]
         db_tournament = TinyDB("tournaments.json")
@@ -28,27 +28,26 @@ class Tournament:
 
     def start_tournament(self):
 
-        tournament = Tournament()
         os.system('cls')
 
         print("Write the name of the tournament")
-        tournament.name_tournament = input()
+        self.name_tournament = input()
         print("Write the place of the tournament")
-        tournament.place_tournament = input()
+        self.place_tournament = input()
         print("Write the date of the tournament")
-        tournament.date_tournament = input()
+        self.date_tournament = input()
         print("Write the number of round of the tournament  (default=4)")
-        tournament.nb_round = input()
+        self.nb_round = input()
 
         os.system('cls')
-        print(tournament.name_tournament)
+        print(self.name_tournament)
 
-        print('\nChoice ' + str(tournament.NB_PLAYERS) + ' players :' + '\n')
+        print('\nChoice ' + str(self.NB_PLAYERS) + ' players :' + '\n')
         player = Player()
         player.find_all_players()
         print('\n[C] : Add new players')
 
-        tournament.save_tournament(tournament.name_tournament, tournament.place_tournament, tournament.date_tournament, tournament.nb_round)
+        self.save_tournament()
 
     @staticmethod
     def modify_tournament():
