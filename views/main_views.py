@@ -1,6 +1,5 @@
 from models import SettingTournament
-import json
-import os
+
 
 
 class ShowPlayers:
@@ -18,25 +17,60 @@ class ShowMod:
 
 
 class ShowTournaments:
-    def __call__(self, root_directory):
-        tournament_attributes = json.load(open(root_directory + "\info_tournaments.json"))
-        for nm_tournament in tournament_attributes["tournaments"]:
-            print(tournament_attributes["tournaments"][nm_tournament]["name_tournament"])
+    def __call__(self, root_directory, db_tournament):
+
+        print("Load tournament :\n")
+        tournament = db_tournament.table("tournaments")
+        for nb_tournament in range(len(tournament.all())):
+            print(tournament.all()[nb_tournament]["name_tournament"])
 
 
 class InputTournaments:
     def __call__(self):
-        print("Write the name of the tournament")
-        name_tournament = input()
 
-        print("Write the place of the tournament")
-        place_tournament = input()
+        # Input name_tournament
+        while True:
+            name_tournament = input("Write the name of the tournament : ")
 
-        print("Write the date of the tournament")
-        date_tournament = input()
+            try:
+                name_tournament = str(name_tournament)
+                break
 
-        print("Write the number of round of the tournament  (default=4)")
-        nb_round = input()
+            except ValueError:
+                print("incorrect input")
+
+        # Input place_tournament
+        while True:
+            place_tournament = input("Write the place of the tournament : ")
+
+            try:
+                place_tournament = str(place_tournament)
+                break
+
+            except ValueError:
+                print("incorrect input")
+
+        # Input date_tournament
+        while True:
+            date_entry = input('Enter a date in YYYY-MM-DD format : ')
+            try:
+                year, month, day = map(int, date_entry.split('-'))
+                date_tournament = year, month, day
+                break
+
+            except ValueError:
+                print("incorrect input")
+
+        #Input nb_round
+        while True:
+            nb_round = input("Write the number of round of the tournament  (default=4) : ")
+
+            try:
+                nb_round = int(nb_round)
+                break
+
+            except ValueError:
+                print("Don't write letters in the date")
 
         print('\nChoice ' + str(SettingTournament.NB_PLAYERS) + ' players :' + '\n')
 
@@ -44,31 +78,62 @@ class InputTournaments:
 
 
 class InputPlayers:
+    def __init__(self, db_info_player):
+        self.db_info_player = db_info_player
 
     def __call__(self):
 
-        print("Write your name")
-        surname = input()
+        # Input surname
+        while True:
+            surname = input("Write your name : ")
 
-        print("Write your first name")
-        first_name = input()
+            try:
+                surname = str(surname)
+                break
 
-        print("Write your birthday")
-        date_of_birth = input()
+            except ValueError:
+                print("incorrect input")
 
-        print("Write your sex")
-        sex = input()
+        # Input first_name
+        while True:
+            first_name = input("Write your first name : ")
+            try:
+                first_name = str(first_name)
+                break
+
+            except ValueError:
+                print("incorrect input")
+
+        # Input date_of_birth
+        while True:
+            date_entry = input('Enter a date in YYYY-MM-DD format : ')
+            try:
+                year, month, day = map(int, date_entry.split('-'))
+                date_of_birth = year, month, day
+                break
+
+            except ValueError:
+                print("incorrect input")
+
+        # Input sex
+        while True:
+            sex = input("Write your sex (M/W) : ")
+            if sex not in ["M", "W"]:
+                print('That\'s not an correct answer (M or W)')
+            else:
+                break
 
         list_id = []
-        player_id = json.load(open(os.getcwd() + "\Players_saved.json"))
-        for nb_id in player_id["Players"]:
-            list_id.append(player_id["Players"][nb_id]['id'])
+        players = self.db_info_player.table("Players")
 
-        print(list_id)
+        for nb_players in range(len(players.all())):
+            list_id.append(players.all()[nb_players]['id'])
+
         id = 1
         while 1:
             if (id in list_id):
                 id = id + 1
             else:
                 break
+
         return first_name, surname, id, date_of_birth, sex
