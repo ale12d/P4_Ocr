@@ -1,3 +1,3 @@
-from .main_controllers import CreatePlayer
+from controllers.main_controllers import CreatePlayer, SortController
 
-__all__ = ["CreatePlayer"]
+__all__ = ["CreatePlayer", "SortController"]

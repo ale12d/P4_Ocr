@@ -1,5 +1,5 @@
 from models import SettingTournament
-
+from tinydb import Query
 
 
 class ShowPlayers:
@@ -7,25 +7,119 @@ class ShowPlayers:
         print("[" + str(id) + "] " + surname + ' ' +
               firstname)
 
+class ShowAllPlayers:
+    def __init__(self, db_info_player):
+        self.db_info_player = db_info_player
+        self.list_players = []
+    def __call__(self):
+        players = self.db_info_player.table("Players")
+
+        print("id: name:\n")
+        for nm_player in range(len(players.all())):
+            print("[" + str(players.all()[nm_player]['id']) + "] " + str(
+                players.all()[nm_player]['first_name']) + " " + str(players.all()[nm_player]['surname']))
+            self.list_players.append(str(
+                players.all()[nm_player]['id']))
+
+        return self.list_players
+
+class ShowMatchs:
+    def __init__(self, id_input, db_tournament):
+        self.id_input = id_input
+        self.db_tournament = db_tournament
+
+    def __call__(self):
+        tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
+        print(tournament["result"])
+
+class ShowRounds:
+    def __init__(self, id_input, db_tournament):
+        self.id_input = id_input
+        self.db_tournament = db_tournament
+
+    def __call__(self):
+        tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
+
+        for nb_round in range(tournament["nb_round"]) :
+            print("round " + str(nb_round+1) + ":")
+            for nb_match in range(int(len(tournament["players"])/2)):
+                try:
+                    print(list(tournament["result"])[nb_match] + '  winner : ' + str(list(tournament["result"][list(tournament["result"])[nb_match]])))
+                except IndexError:
+                    print("(unfinished)")
+                    break
+            try:
+                list(tournament["result"])[nb_match]
+            except IndexError:
+                    break
+
+class ShowPlayers:
+    def __init__(self, id_input, db_tournament, db_info_player):
+        self.id_input = id_input
+        self.db_tournament = db_tournament
+        self.db_info_player = db_info_player
+        self.list_players = []
+
+    def __call__(self):
+        tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
+        for nb_players in range(len(list(tournament["players"].values()))):
+            players = self.db_info_player.table("Players").get(
+                Query().id == int(list(tournament["players"].values())[nb_players]))
+            self.list_players.append(players["id"])
+        return self.list_players
 
 class ShowMod:
     def __call__(self):
         print("[1] : Start a tournaments")
-        print("[2] : Modify a tournaments")
+        print("[2] : Load a tournaments")
         print("[3] : Ranking")
         print("\n[0] : Add new player")
 
 
-class ShowTournaments:
-    def __call__(self, root_directory, db_tournament):
+class ShowModRank:
+    def __call__(self):
+        print("[1] : List all players")
+        print("[2] : List of tournament players")
+        print("[3] : List all tournament")
+        print("[4] : List of tournament rounds")
+        print("[5] : List of tournament matchs")
 
-        print("Load tournament :\n")
-        tournament = db_tournament.table("tournaments")
+
+class ShowTournaments:
+    def __init__(self, db_tournament, mod, db_info_player):
+        self.db_tournament = db_tournament
+        self.mod = mod
+        self.db_info_player = db_info_player
+
+    def __call__(self):
+
+        print("id: name:\n")
+        tournament = self.db_tournament.table("tournaments")
         for nb_tournament in range(len(tournament.all())):
-            print(tournament.all()[nb_tournament]["name_tournament"])
+            print("[" + str(tournament.all()[nb_tournament]["id_tournament"]) + "] " + str(
+                tournament.all()[nb_tournament]["name_tournament"]))
+
+        if int(self.mod) == 2:
+            id_input = input("Which tournament ? : \n")
+            show_players = ShowPlayers(id_input, self.db_tournament, self.db_info_player)
+            show_players()
+
+        if int(self.mod) == 4:
+            id_input = input("Which tournament ? : \n")
+            show_rounds = ShowRounds(id_input, self.db_tournament)
+            show_rounds()
+
+        if int(self.mod) == 5:
+            id_input = input("Which tournament ? : \n")
+            show_matchs = ShowMatchs(id_input, self.db_tournament)
+            show_matchs()
 
 
 class InputTournaments:
+
+    def __init__(self, db_tournament):
+        self.db_tournament = db_tournament
+
     def __call__(self):
 
         # Input name_tournament
@@ -61,7 +155,7 @@ class InputTournaments:
             except ValueError:
                 print("incorrect input")
 
-        #Input nb_round
+        # Input nb_round
         while True:
             nb_round = input("Write the number of round of the tournament  (default=4) : ")
 
@@ -74,7 +168,20 @@ class InputTournaments:
 
         print('\nChoice ' + str(SettingTournament.NB_PLAYERS) + ' players :' + '\n')
 
-        return name_tournament, place_tournament, date_tournament, nb_round
+        list_id = []
+        tournament = self.db_tournament.table("tournaments")
+
+        for nb_tournament in range(len(tournament.all())):
+            list_id.append(tournament.all()[nb_tournament]['id_tournament'])
+
+        id_tournament = 1
+        while 1:
+            if id_tournament in list_id:
+                id_tournament = id_tournament + 1
+            else:
+                break
+
+        return id_tournament, name_tournament, place_tournament, date_tournament, nb_round
 
 
 class InputPlayers:
@@ -131,7 +238,7 @@ class InputPlayers:
 
         id = 1
         while 1:
-            if (id in list_id):
+            if id in list_id:
                 id = id + 1
             else:
                 break
