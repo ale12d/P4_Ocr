@@ -1,4 +1,6 @@
 from models import SettingTournament
+from models import SettingRound
+from models import SettingMatch
 from models import InfoNewPlayer
 from views import ShowMod, InputTournaments, InputPlayers, ShowTournaments, \
     ShowModRank, ShowAllPlayers, ShowMatchsToDo, ShowResultInput
@@ -17,9 +19,11 @@ class ApplicationController:
 
 
 class StartTournament:
-    def __init__(self, db_info_player, db_tournament):
+    def __init__(self, db_info_player, db_tournament, db_round, db_match):
         self.db_info_player = db_info_player
         self.db_tournament = db_tournament
+        self.db_round = db_round
+        self.db_match = db_match
 
     def __call__(self):
         input_tournaments = InputTournaments(self.db_tournament)
@@ -30,7 +34,8 @@ class StartTournament:
                                                date_tournament,
                                                nb_round)
 
-        return PickPerId(setting_tournament, self.db_info_player)
+        return PickPerId(setting_tournament, self.db_info_player,
+                         self.db_round, self.db_match)
 
 
 class PairPlayers:
@@ -97,6 +102,9 @@ class MainMenuController:
     def __call__(self):
         db_info_player = TinyDB("Players_saved.json")
         db_tournament = TinyDB("info_tournaments.json")
+        db_round = TinyDB("info_db_round.json")
+        db_match = TinyDB("info_db_match.json")
+
         show_mod = ShowMod()
         show_mod()
 
@@ -104,11 +112,13 @@ class MainMenuController:
 
             mod = input('\nChoose an option from among these (1,2,3,0) :')
 
-            option = {1: StartTournament(db_info_player, db_tournament),
-                      2: LoadTournament(db_tournament),
-                      3: RankMenuController(db_tournament, db_info_player),
-                      0: CreatePlayer(db_info_player),
-                      }
+            option = {
+                1: StartTournament(db_info_player, db_tournament, db_round,
+                                   db_match),
+                2: LoadTournament(db_tournament),
+                3: RankMenuController(db_tournament, db_info_player),
+                0: CreatePlayer(db_info_player),
+                }
 
             if int(mod) in [1, 2, 3, 0]:
                 return option[int(mod)]()
@@ -233,6 +243,42 @@ class SaveResult:
                                       self.User.id_tournament == id_tournament)
 
 
+class SaveRound:
+
+    def __init__(self, setting_round, db_round):
+        self.setting_round = setting_round
+        self.db_round = db_round
+
+    def __call__(self):
+        serialized_info = [{
+            'id_tournament': getattr(self.setting_round, "id_tournament"),
+            'id_round': getattr(self.setting_round, "id_round"),
+            'matchs': getattr(self.setting_round, "matchs"),
+        }]
+        info_round = self.db_round.table("Rounds")
+        info_round.insert_multiple(serialized_info)
+
+        return info_round
+
+
+class SaveMatch:
+
+    def __init__(self, setting_match, db_match):
+        self.setting_match = setting_match
+        self.db_match = db_match
+
+    def __call__(self):
+        serialized_info = [{
+            'id_round': getattr(self.setting_match, "id_round"),
+            'id_match': getattr(self.setting_match, "id_match"),
+            'match': getattr(self.setting_match, "match"),
+        }]
+        info_match = self.db_match.table("Match")
+        info_match.insert_multiple(serialized_info)
+
+        return info_match
+
+
 class SaveNewPlayer:
 
     def __init__(self, info_new_player, db_info_player):
@@ -270,9 +316,11 @@ class ResultRound:
 
 class PickPerId:
 
-    def __init__(self, setting_tournament, db_info_player):
+    def __init__(self, setting_tournament, db_info_player, db_round, db_match):
         self.setting_tournament = setting_tournament
         self.db_info_player = db_info_player
+        self.db_round = db_round
+        self.db_match = db_match
 
     def __call__(self):
 
@@ -310,16 +358,18 @@ class PickPerId:
                     print("invalid id")
 
             self.player_dic["player " + str(player_to_pick + 1)] = pick
-            print(self.player_dic.values())
 
         self.setting_tournament.players = self.player_dic
-        return StartRound(self.setting_tournament, self.db_info_player)
+        return StartRound(self.setting_tournament, self.db_info_player,
+                          self.db_round, self.db_match)
 
 
 class StartRound:
-    def __init__(self, setting_tournament, db_info_player):
+    def __init__(self, setting_tournament, db_info_player, db_round, db_match):
         self.setting_tournament = setting_tournament
         self.db_info_player = db_info_player
+        self.db_round = db_round
+        self.db_match = db_match
         self.result = {}
         self.players_match = 0
 
@@ -337,10 +387,27 @@ class StartRound:
             show_matchs_to_do = ShowMatchsToDo(self.setting_tournament,
                                                match_to_do)
             show_matchs_to_do()
-
             print("\n")
+            def_id_round = DefIdRound(self.db_round)
+            id_round = def_id_round()
+            setting_round = SettingRound(self.setting_tournament.id_tournament,
+                                         id_round,
+                                         match_to_do)
+            save_round = SaveRound(setting_round, self.db_round)
+            save_round()
 
             for nb_match in range(int(self.setting_tournament.NB_PLAYERS / 2)):
+                def_id_match = DefIdMatch(self.db_match)
+                id_match = def_id_match()
+                match = str(list(match_to_do.keys())[nb_match]) + "-" + \
+                    str(list(match_to_do.values())[nb_match])
+                setting_match = SettingMatch(
+                    setting_round.id_round,
+                    id_match,
+                    match)
+                save_match = SaveMatch(setting_match, self.db_match)
+                save_match()
+
                 show_result_input = ShowResultInput(self.setting_tournament,
                                                     match_to_do, nb_match)
                 winner_input = show_result_input()
@@ -359,6 +426,50 @@ class StartRound:
         id_tournament = getattr(self.setting_tournament, "id_tournament")
         tournaments_table.update({'status': 1},
                                  Query().id_tournament == id_tournament)
+
+
+class DefIdRound:
+    def __init__(self, db_round):
+        self.db_round = db_round
+
+    def __call__(self):
+
+        list_id = []
+        rounds = self.db_round.table("Rounds")
+
+        for nb_rounds in range(len(rounds.all())):
+            list_id.append(rounds.all()[nb_rounds]['id_round'])
+
+        id = 1
+        while 1:
+            if id in list_id:
+                id = id + 1
+            else:
+                break
+
+        return id
+
+
+class DefIdMatch:
+    def __init__(self, db_match):
+        self.db_match = db_match
+
+    def __call__(self):
+
+        list_id = []
+        match = self.db_match.table("Match")
+
+        for nb_matchs in range(len(match.all())):
+            list_id.append(match.all()[nb_matchs]['id_match'])
+
+        id = 1
+        while 1:
+            if id in list_id:
+                id = id + 1
+            else:
+                break
+
+        return id
 
 
 class SortRank:
