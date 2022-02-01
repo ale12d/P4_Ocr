@@ -1,6 +1,7 @@
 from models import SettingTournament
 from models import InfoNewPlayer
-from views import ShowMod, InputTournaments, InputPlayers, ShowTournaments, ShowModRank, ShowAllPlayers
+from views import ShowMod, InputTournaments, InputPlayers, ShowTournaments, \
+    ShowModRank, ShowAllPlayers, ShowMatchsToDo, ShowResultInput
 from tinydb import TinyDB, Query
 
 
@@ -22,8 +23,11 @@ class StartTournament:
 
     def __call__(self):
         input_tournaments = InputTournaments(self.db_tournament)
-        id_tournament, name_tournament, place_tournament, date_tournament, nb_round = input_tournaments()
-        setting_tournament = SettingTournament(id_tournament, name_tournament, place_tournament, date_tournament,
+        id_tournament, name_tournament, place_tournament, date_tournament, \
+            nb_round = input_tournaments()
+        setting_tournament = SettingTournament(id_tournament, name_tournament,
+                                               place_tournament,
+                                               date_tournament,
                                                nb_round)
 
         return PickPerId(setting_tournament, self.db_info_player)
@@ -45,26 +49,35 @@ class PairPlayers:
         match_to_do = {}
 
         for nb_players in range(len(players.all())):
-            dic_rank_id[players.all()[nb_players]["id"]] = players.all()[nb_players]["ranking"]
+            dic_rank_id[players.all()[nb_players]["id"]] = \
+                players.all()[nb_players]["ranking"]
 
         for i in range(self.setting_tournament.NB_PLAYERS):
-            list_players.append(self.setting_tournament.players['player ' + str(i + 1)])
-            players_rank_game[int(self.setting_tournament.players['player ' + str(i + 1)])] = dic_rank_id[
-                int(self.setting_tournament.players['player ' + str(i + 1)])]
-            sorted_players_rank_game = sorted(players_rank_game.items(), key=lambda kv: kv[1])
+            list_players.append(
+                self.setting_tournament.players['player ' + str(i + 1)])
+            players_rank_game[
+                int(self.setting_tournament.players['player ' + str(i + 1)])] \
+                = dic_rank_id[int(self.setting_tournament.players[
+                                      'player ' + str(i + 1)])]
+            sorted_players_rank_game = sorted(players_rank_game.items(),
+                                              key=lambda kv: kv[1])
 
         if self.result == {}:
 
             for player in range(int(self.setting_tournament.NB_PLAYERS / 2)):
                 match_to_do[sorted_players_rank_game[player][0]] = \
-                    sorted_players_rank_game[player + int(self.setting_tournament.NB_PLAYERS / 2)][0]
+                    sorted_players_rank_game[
+                        player + int(self.setting_tournament.NB_PLAYERS / 2)][
+                        0]
             return match_to_do
 
         elif self.result != {}:
 
             for player in range(int(self.setting_tournament.NB_PLAYERS / 2)):
                 match_to_do[sorted_players_rank_game[player][0]] = \
-                    sorted_players_rank_game[player + int(self.setting_tournament.NB_PLAYERS / 2)][0]
+                    sorted_players_rank_game[
+                        player + int(self.setting_tournament.NB_PLAYERS / 2)][
+                        0]
             return match_to_do
 
 
@@ -73,8 +86,10 @@ class LoadTournament:
         self.db_tournament = db_tournament
 
     def __call__(self):
-        tournament = self.db_tournament.table("tournaments").get(Query().status == 0)
-        print("[" + str(tournament['id_tournament']) + "] " + tournament['name_tournament'])
+        tournament = self.db_tournament.table("tournaments").get(
+            Query().status == 0)
+        print("[" + str(tournament['id_tournament']) + "] " + tournament[
+            'name_tournament'])
 
 
 class MainMenuController:
@@ -117,15 +132,20 @@ class RankMenuController:
             mod = input('\nChoose an option from among these (1,2,3,4,5) :')
 
             option = {1: ShowAllPlayers(self.db_info_player),
-                      2: ShowTournaments(self.db_tournament, mod, self.db_info_player),
-                      3: ShowTournaments(self.db_tournament, mod, self.db_info_player),
-                      4: ShowTournaments(self.db_tournament, mod, self.db_info_player),
-                      5: ShowTournaments(self.db_tournament, mod, self.db_info_player),
+                      2: ShowTournaments(self.db_tournament, mod,
+                                         self.db_info_player),
+                      3: ShowTournaments(self.db_tournament, mod,
+                                         self.db_info_player),
+                      4: ShowTournaments(self.db_tournament, mod,
+                                         self.db_info_player),
+                      5: ShowTournaments(self.db_tournament, mod,
+                                         self.db_info_player),
                       }
 
             if int(mod) in [1, 2]:
                 list_players = option[int(mod)]()
-                sort_controller = SortController(list_players, self.db_info_player)
+                sort_controller = SortController(list_players,
+                                                 self.db_info_player)
                 sort_controller()
                 break
             elif int(mod) in [3, 4, 5]:
@@ -134,6 +154,7 @@ class RankMenuController:
 
             else:
                 print('That\'s not an option!')
+
 
 class SortController:
     def __init__(self, list_players, db_info_player):
@@ -144,7 +165,9 @@ class SortController:
 
         while True:
 
-            sort = input('\n[1]:Sort by alphabetical order   [2]:Sort by ranking   [3]:Exit to main menu\n')
+            sort = input(
+                '\n[1]:Sort by alphabetical order   [2]:Sort by ranking   '
+                '[3]:Exit to main menu\n')
 
             option = {1: SortAlph(self.list_players, self.db_info_player),
                       2: SortRank(self.list_players, self.db_info_player),
@@ -166,7 +189,8 @@ class CreatePlayer:
         ranking = 1000
         input_players = InputPlayers(self.db_info_player)
         first_name, surname, id, date_of_birth, sex = input_players()
-        info_players = InfoNewPlayer(first_name, surname, id, ranking, date_of_birth, sex)
+        info_players = InfoNewPlayer(first_name, surname, id, ranking,
+                                     date_of_birth, sex)
 
         return SaveNewPlayer(info_players, self.db_info_player)
 
@@ -178,9 +202,12 @@ class SaveTournament:
     def __call__(self):
         serialized_tournament = [{
             'id_tournament': getattr(self.setting_tournament, "id_tournament"),
-            'name_tournament': getattr(self.setting_tournament, "name_tournament"),
-            'place_tournament': getattr(self.setting_tournament, "place_tournament"),
-            'date_tournament': getattr(self.setting_tournament, "date_tournament"),
+            'name_tournament': getattr(self.setting_tournament,
+                                       "name_tournament"),
+            'place_tournament': getattr(self.setting_tournament,
+                                        "place_tournament"),
+            'date_tournament': getattr(self.setting_tournament,
+                                       "date_tournament"),
             'nb_round': getattr(self.setting_tournament, "nb_round"),
             'players': getattr(self.setting_tournament, "players"),
             'result': {},
@@ -202,7 +229,8 @@ class SaveResult:
 
     def __call__(self):
         id_tournament = getattr(self.setting_tournament, "id_tournament")
-        self.tournaments_table.update({'result': self.result}, self.User.id_tournament == id_tournament)
+        self.tournaments_table.update({'result': self.result},
+                                      self.User.id_tournament == id_tournament)
 
 
 class SaveNewPlayer:
@@ -252,7 +280,8 @@ class PickPerId:
         self.player_dic = {}
 
         for nm_player in range(len(players.all())):
-            print("[" + str(players.all()[nm_player]['id']) + "] " + players.all()[nm_player]['surname'] + ' ' +
+            print("[" + str(players.all()[nm_player]['id']) + "] " +
+                  players.all()[nm_player]['surname'] + ' ' +
                   players.all()[nm_player]['first_name'])
 
         for nb_player in range(int(self.setting_tournament.NB_PLAYERS)):
@@ -265,12 +294,13 @@ class PickPerId:
                 pick = input()
 
                 try:
-                    player_info = self.db_info_player.table("Players").get(Query().id == int(pick))
+                    player_info = self.db_info_player.table("Players").get(
+                        Query().id == int(pick))
                     int(player_info["id"])
 
                     if pick in self.player_dic.values():
                         print("Already pick")
-                    else :
+                    else:
                         break
 
                 except TypeError:
@@ -300,31 +330,35 @@ class StartRound:
 
         for round in range(self.setting_tournament.nb_round):
 
-            pair_players = PairPlayers(self.setting_tournament, self.db_info_player, self.result)
+            pair_players = PairPlayers(self.setting_tournament,
+                                       self.db_info_player, self.result)
             match_to_do = pair_players()
 
-            # print matchs
-            for nb_match in range(int(self.setting_tournament.NB_PLAYERS / 2)):
-                print("match n°" + str(nb_match + 1) + " : " + str(list(match_to_do.keys())[nb_match]) + " vs " + str(
-                    list(match_to_do.values())[nb_match]))
+            show_matchs_to_do = ShowMatchsToDo(self.setting_tournament,
+                                               match_to_do)
+            show_matchs_to_do()
 
             print("\n")
 
             for nb_match in range(int(self.setting_tournament.NB_PLAYERS / 2)):
-                print("result match n°" + str(nb_match + 1) + " ([" + str(
-                    list(match_to_do.keys())[nb_match]) + "] or " + "[N]" + " or [" + str(
-                    list(match_to_do.values())[nb_match]) + "]) :")
-                winner_input = input()
-                players_match = [str(list(match_to_do.keys())[nb_match]), str(list(match_to_do.values())[nb_match])]
+                show_result_input = ShowResultInput(self.setting_tournament,
+                                                    match_to_do, nb_match)
+                winner_input = show_result_input()
 
-                result_round = ResultRound(winner_input, players_match, self.result)
+                players_match = [str(list(match_to_do.keys())[nb_match]),
+                                 str(list(match_to_do.values())[nb_match])]
+
+                result_round = ResultRound(winner_input, players_match,
+                                           self.result)
                 self.result = result_round()
 
-                save_result = SaveResult(self.result, tournaments_table, self.setting_tournament)
+                save_result = SaveResult(self.result, tournaments_table,
+                                         self.setting_tournament)
                 save_result()
 
         id_tournament = getattr(self.setting_tournament, "id_tournament")
-        tournaments_table.update({'status': 1}, Query().id_tournament == id_tournament)
+        tournaments_table.update({'status': 1},
+                                 Query().id_tournament == id_tournament)
 
 
 class SortRank:
@@ -335,8 +369,11 @@ class SortRank:
 
     def __call__(self):
         for nb_players in range(len(self.list)):
-            players = self.db_info_player.table("Players").get(Query().id == int(self.list[nb_players]))
-            self.sorted_list.append(" [rank:" + str(players["ranking"]) + "] " + players["first_name"] + ' ' + players["surname"])
+            players = self.db_info_player.table("Players").get(
+                Query().id == int(self.list[nb_players]))
+            self.sorted_list.append(
+                " [rank:" + str(players["ranking"]) + "] " + players[
+                    "first_name"] + ' ' + players["surname"])
 
         self.sorted_list.sort(reverse=True)
 
@@ -345,15 +382,20 @@ class SortRank:
         sort_controller = SortController(self.list, self.db_info_player)
         sort_controller()
 
+
 class SortAlph:
     def __init__(self, list, db_info_player):
         self.list = list
         self.db_info_player = db_info_player
         self.sorted_list = []
+
     def __call__(self):
         for nb_players in range(len(self.list)):
-            players = self.db_info_player.table("Players").get(Query().id == int(self.list[nb_players]))
-            self.sorted_list.append(players["first_name"] + ' ' + players["surname"] + " [id:" + str(players["id"]) + "] ")
+            players = self.db_info_player.table("Players").get(
+                Query().id == int(self.list[nb_players]))
+            self.sorted_list.append(
+                players["first_name"] + ' ' + players[
+                    "surname"] + " [id:" + str(players["id"]) + "] ")
 
         sorted_list = sorted(self.sorted_list, key=str.lower)
 
