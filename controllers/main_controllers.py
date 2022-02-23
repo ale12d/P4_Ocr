@@ -4,7 +4,9 @@ from models import SettingMatch
 from models import InfoNewPlayer
 from views import ShowMod, InputTournaments, InputPlayers, ShowTournaments, \
     ShowModRank, ShowAllPlayers, ShowMatchsToDo, ShowResultInput, \
-    InputRanking, ShowPlayerChoose
+    InputRanking, ShowPlayerChoose, ShowWinner, Show_All_PlayersId,\
+    Show_SortAlph, Show_SortRank, TournamentToLoad, RankPlayer, \
+    PlayernbToPick, ShowNbRound
 from tinydb import TinyDB, Query
 from collections import OrderedDict
 
@@ -42,10 +44,9 @@ class StartTournament:
 
 class PairPlayers:
 
-    def __init__(self, setting_tournament, db_info_player, result):
+    def __init__(self, setting_tournament, db_info_player):
         self.setting_tournament = setting_tournament
         self.db_info_player = db_info_player
-        self.result = result
         self.players_wins = {}
 
     def __call__(self):
@@ -70,7 +71,7 @@ class PairPlayers:
             sorted_players_rank_game = sorted(players_rank_game.items(),
                                               key=lambda kv: kv[1])
 
-        if self.result == {}:
+        if self.setting_tournament.result == {}:
 
             for player in range(int(self.setting_tournament.NB_PLAYERS / 2)):
                 match_to_do[sorted_players_rank_game[player][0]] = \
@@ -79,32 +80,78 @@ class PairPlayers:
                         0]
             return match_to_do, self.players_wins
 
-        elif self.result != {}:
+        elif self.setting_tournament.result != {}:
 
             for player in range(len(self.setting_tournament.players)):
                 self.players_wins[list(self.setting_tournament.players.values()
                                        )[player]] = list(
-                    self.result.values()).count(list(self.setting_tournament.
-                                                     players.values())[player])
+                    self.setting_tournament.result.values()).count(
+                    list(self.setting_tournament.
+                         players.values())[player])
 
             self.players_wins = {k: v for k, v in sorted(self.
                                                          players_wins.items(),
                                                          key=lambda item: item[
                                                              1])}
 
-            match_to_do = {7: 2, 8: 5, 6: 3, 4: 1}
+            list_match = []
+            for maxpoint in range(list(self.players_wins.values())[-1] + 1):
+                point = []
+                rank = {}
+
+                for nb_player in range(len(self.players_wins)):
+                    if list(self.players_wins.values())[nb_player] == maxpoint:
+                        point.append(list(self.players_wins.keys())[nb_player])
+
+                for i in range(len(point)):
+                    player = self.db_info_player.table("Players").get(
+                        Query().id == int(point[i]))
+                    rank[point[i]] = player["ranking"]
+
+                rank_sorted = {k: v for k, v in
+                               sorted(rank.items(), key=lambda item: item[1])}
+                for u in range(len(rank_sorted)):
+                    list_match.append(list(rank_sorted.keys())[u])
+
+            list_match = list(zip(*[iter(list_match)] * 2))
+
+            for nb_match in range(len(list_match)):
+                match_to_do[int(list_match[nb_match][0])] = int(
+                    list_match[nb_match][1])
+
             return match_to_do, self.players_wins
 
 
 class LoadTournament:
-    def __init__(self, db_tournament):
+    def __init__(self, db_info_player, db_tournament, db_round,
+                 db_match):
+        self.db_info_player = db_info_player
         self.db_tournament = db_tournament
+        self.db_round = db_round
+        self.db_match = db_match
 
     def __call__(self):
-        tournament = self.db_tournament.table("tournaments").get(
-            Query().status == 0)
-        print("[" + str(tournament['id_tournament']) + "] " + tournament[
-            'name_tournament'])
+
+        tournaments_to_load = TournamentToLoad(self.db_tournament)
+        tournament_loaded = tournaments_to_load()
+
+        tournament_loaded = self.db_tournament.table("tournaments").get(
+            Query().id_tournament == int(tournament_loaded))
+
+        setting_tournament = SettingTournament(
+            tournament_loaded["id_tournament"],
+            tournament_loaded["name_tournament"],
+            tournament_loaded["place_tournament"],
+            tournament_loaded["date_tournament"],
+            tournament_loaded["nb_round"], tournament_loaded["pace"],
+            tournament_loaded["result"], **tournament_loaded["players"])
+
+        round_do = len(setting_tournament.result) // (
+                    len(setting_tournament.players) / 2)
+        start_round = StartRound(setting_tournament, self.db_info_player,
+                                 self.db_round, self.db_match,
+                                 self.db_tournament, int(round_do))
+        start_round()
 
 
 class InputRankingController:
@@ -162,7 +209,8 @@ class PickPlayerId:
             player = self.db_info_player.table("Players").get(
                 Query().id == int(player_choose))
 
-            print(player['surname'] + str(player['ranking']))
+            rank_players = RankPlayer(player)
+            rank_players()
 
         return player, point
 
@@ -185,7 +233,8 @@ class MainMenuController:
             option = {
                 1: StartTournament(db_info_player, db_tournament, db_round,
                                    db_match),
-                2: LoadTournament(db_tournament),
+                2: LoadTournament(db_info_player, db_tournament, db_round,
+                                  db_match),
                 3: RankMenuController(db_tournament, db_info_player),
                 0: CreatePlayer(db_info_player),
             }
@@ -276,8 +325,10 @@ class CreatePlayer:
 
 
 class SaveTournament:
-    def __init__(self, setting_tournament):
+    def __init__(self, setting_tournament, db_tournament, tournaments_table):
         self.setting_tournament = setting_tournament
+        self.db_tournament = db_tournament
+        self.tournaments_table = tournaments_table
 
     def __call__(self):
         serialized_tournament = [{
@@ -291,27 +342,24 @@ class SaveTournament:
             'nb_round': getattr(self.setting_tournament, "nb_round"),
             'players': getattr(self.setting_tournament, "players"),
             'pace': getattr(self.setting_tournament, "pace"),
-            'result': {},
+            'result': getattr(self.setting_tournament, "result"),
             'status': 0,
         }]
-        db_tournament = TinyDB("info_tournaments.json")
-        tournaments_table = db_tournament.table("tournaments")
-        tournaments_table.insert_multiple(serialized_tournament)
 
-        return tournaments_table
+        self.tournaments_table.insert_multiple(serialized_tournament)
 
 
 class SaveResult:
-    def __init__(self, result, tournaments_table, setting_tournament):
-        self.result = result
+    def __init__(self, tournaments_table, setting_tournament):
         self.tournaments_table = tournaments_table
         self.User = Query()
         self.setting_tournament = setting_tournament
 
     def __call__(self):
         id_tournament = getattr(self.setting_tournament, "id_tournament")
-        self.tournaments_table.update({'result': self.result},
-                                      self.User.id_tournament == id_tournament)
+        self.tournaments_table.update(
+            {'result': self.setting_tournament.result},
+            self.User.id_tournament == id_tournament)
 
 
 class SaveRound:
@@ -374,15 +422,16 @@ class SaveNewPlayer:
 
 class ResultRound:
 
-    def __init__(self, winner, players_match, result):
+    def __init__(self, winner, players_match, setting_tournament):
         self.winner = winner
         self.players_match = players_match
-        self.result = result
+        self.setting_tournament = setting_tournament
 
     def __call__(self):
-        self.result['-'.join(self.players_match)] = self.winner
+        self.setting_tournament.result[
+            '-'.join(self.players_match)] = self.winner
 
-        return self.result
+        return self.setting_tournament
 
 
 class PickPerId:
@@ -397,13 +446,10 @@ class PickPerId:
 
     def __call__(self):
 
-        players = self.db_info_player.table("Players")
-        self.player_dic = {}
+        show_all_playerid = Show_All_PlayersId(self.db_info_player)
+        show_all_playerid()
 
-        for nm_player in range(len(players.all())):
-            print("[" + str(players.all()[nm_player]['id']) + "] " +
-                  players.all()[nm_player]['surname'] + ' ' +
-                  players.all()[nm_player]['first_name'])
+        self.player_dic = {}
 
         for nb_player in range(int(self.setting_tournament.NB_PLAYERS)):
             self.player_dic['player ' + str(nb_player + 1)] = None
@@ -411,7 +457,9 @@ class PickPerId:
         for player_to_pick in range(self.setting_tournament.NB_PLAYERS):
             while 1:
 
-                print("\nplayer " + str(player_to_pick + 1))
+                playernb_to_pick = PlayernbToPick(player_to_pick)
+                playernb_to_pick()
+
                 pick = input()
 
                 try:
@@ -433,38 +481,45 @@ class PickPerId:
             self.player_dic["player " + str(player_to_pick + 1)] = pick
 
         self.setting_tournament.players = self.player_dic
+        round = 0
         return StartRound(self.setting_tournament, self.db_info_player,
-                          self.db_round, self.db_match, self.db_tournament)
+                          self.db_round, self.db_match, self.db_tournament,
+                          round)
 
 
 class StartRound:
     def __init__(self, setting_tournament, db_info_player, db_round, db_match,
-                 db_tournament):
+                 db_tournament, round_do):
         self.db_tournament = db_tournament
         self.setting_tournament = setting_tournament
         self.db_info_player = db_info_player
         self.db_round = db_round
         self.db_match = db_match
-        self.result = {}
-        self.players_match = 0
+        self.round_do = round_do
 
     def __call__(self):
-        save_tournament = SaveTournament(self.setting_tournament)
 
-        tournaments_table = save_tournament()
+        tournaments_table = self.db_tournament.table("tournaments")
 
-        for round in range(self.setting_tournament.nb_round):
+        if self.round_do == 0:
+            save_tournament = SaveTournament(self.setting_tournament,
+                                             self.db_tournament,
+                                             tournaments_table)
+
+            save_tournament()
+
+        for round in range(self.setting_tournament.nb_round - self.round_do):
+            show_nb_round = ShowNbRound(round, self.round_do)
+            show_nb_round()
 
             pair_players = PairPlayers(self.setting_tournament,
-                                       self.db_info_player, self.result)
+                                       self.db_info_player)
             match_to_do, players_wins = pair_players()
-            print(players_wins)
 
             show_matchs_to_do = ShowMatchsToDo(self.setting_tournament,
                                                match_to_do,
                                                self.db_info_player)
             show_matchs_to_do()
-            print("\n")
             def_id_round = DefIdRound(self.db_round)
             id_round = def_id_round()
             setting_round = SettingRound(self.setting_tournament.id_tournament,
@@ -477,7 +532,7 @@ class StartRound:
                 def_id_match = DefIdMatch(self.db_match)
                 id_match = def_id_match()
                 match = str(
-                    list(match_to_do.keys())[nb_match]) + "-" +\
+                    list(match_to_do.keys())[nb_match]) + "-" + \
                     str(list(match_to_do.values())[nb_match])
                 setting_match = SettingMatch(
                     setting_round.id_round,
@@ -495,10 +550,10 @@ class StartRound:
                                  str(list(match_to_do.values())[nb_match])]
 
                 result_round = ResultRound(winner_input, players_match,
-                                           self.result)
-                self.result = result_round()
+                                           self.setting_tournament)
+                self.setting_tournament = result_round()
 
-                save_result = SaveResult(self.result, tournaments_table,
+                save_result = SaveResult(tournaments_table,
                                          self.setting_tournament)
                 save_result()
 
@@ -511,10 +566,8 @@ class StartRound:
         tournaments_table.update({'status': 1},
                                  Query().id_tournament == id_tournament)
 
-        player = self.db_info_player.table("Players").get(
-            Query().id == list(players_wins.keys())[-1])
-
-        print("winner : " + player['first_name'] + " " + player['surname'])
+        show_winner = ShowWinner(players_wins, self.db_info_player)
+        show_winner()
 
 
 class DefIdRound:
@@ -577,8 +630,9 @@ class SortRank:
 
         self.sorted_list.sort(reverse=True)
 
-        for nb_players in range(len(self.sorted_list)):
-            print(self.sorted_list[nb_players])
+        show_sort_rank = Show_SortRank(self.sorted_list)
+        show_sort_rank()
+
         sort_controller = SortController(self.list, self.db_info_player)
         sort_controller()
 
@@ -595,11 +649,10 @@ class SortAlph:
                 Query().id == int(self.list[nb_players]))
             self.sorted_list[players["first_name"] + ' ' + players["surname"]]\
                 = " [" + str(players["id"]) + "] "
-        sorted_list = OrderedDict(sorted(self.sorted_list.
-                                         items(), key=lambda t: t[0]))
-        for nb_players in range(len(sorted_list)):
-            print(list(sorted_list.values())[nb_players] + " " +
-                  list(sorted_list.keys())[nb_players])
+        self.sorted_list = OrderedDict(sorted(self.sorted_list.items(),
+                                              key=lambda t: t[0]))
+        show_sort_alph = Show_SortAlph(self.sorted_list)
+        show_sort_alph()
 
         sort_controller = SortController(self.list, self.db_info_player)
         sort_controller()
