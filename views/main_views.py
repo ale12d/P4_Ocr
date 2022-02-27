@@ -11,13 +11,10 @@ class ShowMatchsToDo:
 
     def __call__(self):
         for nb_match in range(int(self.setting_tournament.NB_PLAYERS / 2)):
-            player1 = self.db_info_player.table("Players").get(
-                Query().id == list(self.match_to_do.keys())[nb_match])
-            player2 = self.db_info_player.table("Players").get(
-                Query().id == list(self.match_to_do.values())[nb_match])
+            player1 = self.db_info_player.table("Players").get(Query().id == list(self.match_to_do.keys())[nb_match])
+            player2 = self.db_info_player.table("Players").get(Query().id == list(self.match_to_do.values())[nb_match])
 
-            print("match n°" + str(nb_match + 1) + " : " +
-                  player1["first_name"] + " " + player1["surname"] + " vs " +
+            print("match n°" + str(nb_match + 1) + " : " + player1["first_name"] + " " + player1["surname"] + " vs " +
                   player2["first_name"] + " " + player2["surname"])
 
         print("\n")
@@ -34,23 +31,19 @@ class ShowNbRound:
 
 class ShowResultInput:
 
-    def __init__(self, setting_tournament, match_to_do, nb_match,
-                 db_info_player):
+    def __init__(self, setting_tournament, match_to_do, nb_match, db_info_player):
         self.setting_tournament = setting_tournament
         self.match_to_do = match_to_do
         self.nb_match = nb_match
         self.db_info_player = db_info_player
 
     def __call__(self):
-        player1 = self.db_info_player.table("Players").get(
-            Query().id == list(self.match_to_do.keys())[self.nb_match])
-        player2 = self.db_info_player.table("Players").get(
-            Query().id == list(self.match_to_do.values())[self.nb_match])
+        player1 = self.db_info_player.table("Players").get(Query().id == list(self.match_to_do.keys())[self.nb_match])
+        player2 = self.db_info_player.table("Players").get(Query().id == list(self.match_to_do.values()
+                                                                              )[self.nb_match])
 
-        print("result match n°" + str(self.nb_match + 1) + " (" + player1[
-            "surname"] + " : [" + str(
-            player1["id"]) + "] or " + "[N]" + " or [" + str(
-            player2["id"]) + "] : " + player2["surname"] + ")")
+        print("result match n°" + str(self.nb_match + 1) + " (" + player1["surname"] + " : [" + str(player1["id"]) +
+              "] or " + "[N]" + " or [" + str(player2["id"]) + "] : " + player2["surname"] + ")")
         winner_input = input()
 
         return winner_input
@@ -66,11 +59,10 @@ class ShowAllPlayers:
 
         print("id: name:\n")
         for nm_player in range(len(players.all())):
-            print("[" + str(players.all()[nm_player]['id']) + "] " + str(
-                players.all()[nm_player]['first_name']) + " " + str(
-                players.all()[nm_player]['surname']))
-            self.list_players.append(str(
-                players.all()[nm_player]['id']))
+            print("[" + str(players.all()[nm_player]['id']) + "] " + str(players.all()[nm_player]['first_name']) +
+                  " " + str(players.all()[nm_player]['surname']))
+            self.list_players.append(str(players.all()[nm_player]['id']))
+
         return self.list_players
 
 
@@ -81,33 +73,27 @@ class ShowMatchs:
         self.db_info_player = db_info_player
 
     def __call__(self):
-        tournament = self.db_tournament.table("tournaments").get(
-            Query().id_tournament == int(self.id_input))
+        tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
         for nb_round in range(tournament["nb_round"]):
             for nb_match in range(int(len(tournament["players"]) / 2)):
                 try:
 
-                    winner = self.db_info_player.table("Players").get(
-                        Query().id == int(list(tournament["result"][
-                                                   list(tournament["result"])[
-                                                       nb_match]])[0]))
+                    winner = self.db_info_player.table("Players").get(Query().id == int(list(tournament["result"][
+                                                                                                 list(tournament[
+                                                                                                          "result"])[
+                                                                                                     nb_match]])[0]))
 
                     list_match = [int(s) for s in str(
-                        list(tournament["result"].keys())[nb_match]).replace(
-                        '-', ' ').split() if s.isdigit()]
+                        list(tournament["result"].keys())[nb_match]).replace('-', ' ').split() if s.isdigit()]
 
-                    player1 = self.db_info_player.table("Players").get(
-                        Query().id == list_match[0])
+                    player1 = self.db_info_player.table("Players").get(Query().id == list_match[0])
 
-                    player2 = self.db_info_player.table("Players").get(
-                        Query().id == list_match[1])
+                    player2 = self.db_info_player.table("Players").get(Query().id == list_match[1])
 
-                    print(player1["surname"] + " " + player1[
-                        "first_name"] + ' vs ' + player2["surname"] + " " +
+                    print(player1["surname"] + " " + player1["first_name"] + ' vs ' + player2["surname"] + " " +
                           player2["first_name"])
 
-                    print('  winner : ' + winner["first_name"] + " " + winner[
-                        "surname"] + "\n")
+                    print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
 
                 except IndexError:
                     print("(unfinished)")
@@ -125,8 +111,7 @@ class ShowRounds:
         self.db_info_player = db_info_player
 
     def __call__(self):
-        tournament = self.db_tournament.table("tournaments").get(
-            Query().id_tournament == int(self.id_input))
+        tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
 
         for nb_round in range(tournament["nb_round"]):
 
@@ -134,27 +119,22 @@ class ShowRounds:
             for nb_match in range(int(len(tournament["players"]) / 2)):
                 try:
 
-                    winner = self.db_info_player.table("Players").get(
-                        Query().id == int(list(tournament["result"][
-                                                   list(tournament["result"])[
-                                                       nb_match]])[0]))
+                    winner = self.db_info_player.table("Players").get(Query().id == int(list(tournament["result"][
+                                                                                                 list(tournament[
+                                                                                                          "result"])[
+                                                                                                     nb_match]])[0]))
 
-                    list_match = [int(s) for s in str(
-                        list(tournament["result"].keys())[nb_match]).replace(
+                    list_match = [int(s) for s in str(list(tournament["result"].keys())[nb_match]).replace(
                         '-', ' ').split() if s.isdigit()]
 
-                    player1 = self.db_info_player.table("Players").get(
-                        Query().id == list_match[0])
+                    player1 = self.db_info_player.table("Players").get(Query().id == list_match[0])
 
-                    player2 = self.db_info_player.table("Players").get(
-                        Query().id == list_match[1])
+                    player2 = self.db_info_player.table("Players").get(Query().id == list_match[1])
 
-                    print(player1["surname"] + " " + player1[
-                        "first_name"] + ' vs ' + player2["surname"] + " " +
+                    print(player1["surname"] + " " + player1["first_name"] + ' vs ' + player2["surname"] + " " +
                           player2["first_name"])
 
-                    print('  winner : ' + winner["first_name"] + " " + winner[
-                        "surname"] + "\n")
+                    print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
 
                 except IndexError:
                     print("(unfinished)")
@@ -173,19 +153,15 @@ class ShowPlayers:
         self.list_players = []
 
     def __call__(self):
-        tournament = self.db_tournament.table("tournaments").get(
-            Query().id_tournament == int(self.id_input))
+        tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
         for nb_players in range(len(list(tournament["players"].values()))):
-            players = self.db_info_player.table("Players").get(
-                Query().id == int(
-                    list(tournament["players"].values())[nb_players]))
+            players = self.db_info_player.table("Players").get(Query().id == int(list(tournament["players"].values()
+                                                                                      )[nb_players]))
             self.list_players.append(players["id"])
         print(self.list_players)
         for nb_player in range(len(self.list_players)):
-            player = self.db_info_player.table("Players").get(
-                Query().id == self.list_players[nb_player])
-            print('[' + str(player['id']) + '] ' + player['first_name'] + ' ' +
-                  player['surname'])
+            player = self.db_info_player.table("Players").get(Query().id == self.list_players[nb_player])
+            print('[' + str(player['id']) + '] ' + player['first_name'] + ' ' + player['surname'])
 
         return self.list_players
 
@@ -196,8 +172,7 @@ class ShowWinner:
         self.db_info_player = db_info_player
 
     def __call__(self):
-        player = self.db_info_player.table("Players").get(
-            Query().id == int(list(self.players_wins.keys())[-1]))
+        player = self.db_info_player.table("Players").get(Query().id == int(list(self.players_wins.keys())[-1]))
 
         print("\nwinner : " + player['first_name'] + " " + player['surname'])
 
@@ -206,7 +181,7 @@ class ShowMod:
     def __call__(self):
         print("[1] : Start a tournaments")
         print("[2] : Load a tournaments")
-        print("[3] : Ranking")
+        print("[3] : Report")
         print("\n[0] : Add new player")
 
 
@@ -236,25 +211,22 @@ class ShowTournaments:
 
         if int(self.mod) == 2:
             id_input = input("Which tournament ? : \n")
-            show_players = ShowPlayers(id_input, self.db_tournament,
-                                       self.db_info_player)
+            show_players = ShowPlayers(id_input, self.db_tournament, self.db_info_player)
             list_players = show_players()
             return list_players
 
         if int(self.mod) == 4:
             id_input = input("Which tournament ? : \n")
-            show_rounds = ShowRounds(id_input, self.db_tournament,
-                                     self.db_info_player)
+            show_rounds = ShowRounds(id_input, self.db_tournament, self.db_info_player)
             show_rounds()
 
         if int(self.mod) == 5:
             id_input = input("Which tournament ? : \n")
-            show_matchs = ShowMatchs(id_input, self.db_tournament,
-                                     self.db_info_player)
+            show_matchs = ShowMatchs(id_input, self.db_tournament, self.db_info_player)
             show_matchs()
 
 
-class Show_All_PlayersId:
+class ShowAllPlayersId:
     def __init__(self, db_info_player):
         self.db_info_player = db_info_player
 
@@ -262,8 +234,7 @@ class Show_All_PlayersId:
         players = self.db_info_player.table("Players")
 
         for nm_player in range(len(players.all())):
-            print("[" + str(players.all()[nm_player]['id']) + "] " +
-                  players.all()[nm_player]['surname'] + ' ' +
+            print("[" + str(players.all()[nm_player]['id']) + "] " + players.all()[nm_player]['surname'] + ' ' +
                   players.all()[nm_player]['first_name'])
 
 
@@ -321,8 +292,7 @@ class InputTournaments:
 
         while True:
             pace = input(
-                "Choose the pace of the tournament ([1] : bullet  -  "
-                "[2] : blitz  -  [3] : fast) : ")
+                "Choose the pace of the tournament ([1] : bullet  -  [2] : blitz  -  [3] : fast) : ")
             if pace not in ["1", "2", "3"]:
                 print('That\'s not an correct answer (1, 2 or 3)')
             else:
@@ -345,8 +315,7 @@ class InputTournaments:
                 break
 
         return \
-            id_tournament, name_tournament, place_tournament, date_tournament,\
-            nb_round, pace
+            id_tournament, name_tournament, place_tournament, date_tournament, nb_round, pace
 
 
 class InputPlayers:
@@ -414,8 +383,7 @@ class InputPlayers:
 class InputRanking:
     def __call__(self):
         while 1:
-            after_round_input = input(
-                "edit ranking point - enter [R] | next - enter [N] : ")
+            after_round_input = input("edit ranking point - enter [R] | next - enter [N] : ")
 
             if after_round_input not in ["R", "N"]:
                 print("incorrect input")
@@ -434,30 +402,26 @@ class ShowPlayerChoose:
 
     def __call__(self):
         for nb_players in range(len(self.tournament['players'])):
-            player = self.db_info_player.table("Players").get(
-                Query().id == int(
-                    list(self.tournament['players'].values())[nb_players]))
+            player = self.db_info_player.table("Players").get(Query().id == int(list(self.tournament['players'].
+                                                                                     values())[nb_players]))
 
-            print("[" + list(self.tournament['players'].values())[
-                nb_players] + "] " + player["first_name"] + " " + player[
-                      "surname"])
+            print("[" + list(self.tournament['players'].values())[nb_players] + "] " + player["first_name"] + " " +
+                  player["surname"])
 
         player_choose = input("Choose the player to edit rank | E to exit: ")
 
         if player_choose == 'E':
             return player_choose, self.point
         else:
-            player = self.db_info_player.table("Players").get(
-                Query().id == int(player_choose))
+            player = self.db_info_player.table("Players").get(Query().id == int(player_choose))
 
-            print(player["first_name"] + " " + player['surname'] + " : " + str(
-                player["ranking"]))
+            print(player["first_name"] + " " + player['surname'] + " : " + str(player["ranking"]))
             self.point = input("add or remove point : ")
 
             return player_choose, self.point
 
 
-class Show_SortAlph:
+class ShowSortAlph:
     def __init__(self, sorted_list):
         self.sorted_list = sorted_list
 
@@ -467,7 +431,7 @@ class Show_SortAlph:
                   list(self.sorted_list.keys())[nb_players])
 
 
-class Show_SortRank:
+class ShowSortRank:
     def __init__(self, sorted_list):
         self.sorted_list = sorted_list
 
@@ -477,28 +441,23 @@ class Show_SortRank:
 
 
 class TournamentToLoad:
-    def __init__(self, db_tournament):
-        self.db_tournament = db_tournament
+    def __init__(self, tournament_list):
+        self.tournament_list = tournament_list
 
     def __call__(self):
-        tournament_list = self.db_tournament.table("tournaments").search(
-            Query().status == 0)
 
-        for nb_tournament in range(len(tournament_list)):
-            print("[" + str(tournament_list[nb_tournament]['id_tournament'])
-                  + "] " + tournament_list[nb_tournament]['name_tournament'])
+        if len(self.tournament_list) == 0:
+            print("\nno tournaments to load \n")
+
+            return
+
+        for nb_tournament in range(len(self.tournament_list)):
+            print("[" + str(self.tournament_list[nb_tournament]['id_tournament']) + "] " + self.
+                  tournament_list[nb_tournament]['name_tournament'])
 
         tournament_loaded = input("Which tournament ? : ")
 
         return tournament_loaded
-
-
-class RankPlayer:
-    def __init__(self, player):
-        self.player = player
-
-    def __call__(self):
-        print(self.player['surname'] + str(self.player['ranking']))
 
 
 class PlayernbToPick:
@@ -507,3 +466,67 @@ class PlayernbToPick:
 
     def __call__(self):
         print("\nplayer " + str(self.player_to_pick + 1) + " :")
+
+
+class ModInput:
+    def __call__(self):
+        while 1:
+            mod = input('\nChoose an option from among these (1,2,3,0) :')
+
+            if int(mod) in [1, 2, 3, 0]:
+                return mod
+
+            else:
+                print('That\'s not an option!')
+
+
+class ModRankInput:
+    def __call__(self):
+        while 1:
+            mod = input('\nChoose an option from among these (1,2,3,4,5) :')
+
+            if int(mod) in [1, 2, 3, 4, 5]:
+                return mod
+
+            else:
+                print('That\'s not an option!')
+
+
+class ModSortInput:
+    def __call__(self):
+        while 1:
+            sort = input('\n[1]:Sort by alphabetical order   [2]:Sort by ranking   [3]:Exit to main menu\n')
+
+            if int(sort) in [1, 2, 3]:
+                return sort
+
+            else:
+                print('That\'s not an option!')
+
+
+class PickInput:
+    def __init__(self, db_info_player, player_dic, playernb_to_pick):
+        self.db_info_player = db_info_player
+        self.player_dic = player_dic
+        self.playernb_to_pick = playernb_to_pick
+
+    def __call__(self):
+        while 1:
+
+            self.playernb_to_pick()
+            pick = input()
+
+            try:
+                player_info = self.db_info_player.table("Players").get(Query().id == int(pick))
+                int(player_info["id"])
+
+                if pick in self.player_dic.values():
+                    print("Already pick")
+                else:
+                    return pick
+
+            except TypeError:
+                print("invalid id")
+
+            except ValueError:
+                print("invalid id")
