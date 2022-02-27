@@ -74,17 +74,21 @@ class ShowMatchs:
 
     def __call__(self):
         tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
+        nb_match_max = 0
         for nb_round in range(tournament["nb_round"]):
             for nb_match in range(int(len(tournament["players"]) / 2)):
                 try:
 
-                    winner = self.db_info_player.table("Players").get(Query().id == int(list(tournament["result"][
-                                                                                                 list(tournament[
-                                                                                                          "result"])[
-                                                                                                     nb_match]])[0]))
+                    if list(tournament["result"][list(tournament["result"])[nb_match]])[0] != "N":
+                        winner = self.db_info_player.table("Players").get(Query().id == int(list(tournament["result"][
+                                                                                                     list(tournament[
+                                                                                                            "result"])[
+                                                                                                      nb_match]])[0]))
+                    else:
+                        winner = 'DRAW'
 
                     list_match = [int(s) for s in str(
-                        list(tournament["result"].keys())[nb_match]).replace('-', ' ').split() if s.isdigit()]
+                        list(tournament["result"].keys())[nb_match + nb_match_max]).replace('-', ' ').split() if s.isdigit()]
 
                     player1 = self.db_info_player.table("Players").get(Query().id == list_match[0])
 
@@ -93,11 +97,17 @@ class ShowMatchs:
                     print(player1["surname"] + " " + player1["first_name"] + ' vs ' + player2["surname"] + " " +
                           player2["first_name"])
 
-                    print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
+                    if winner == 'DRAW':
+                        print('  winner : ' +  winner + "\n")
+                    else:
+                        print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
 
                 except IndexError:
                     print("(unfinished)")
                     break
+
+            nb_match_max = nb_match_max + int(len(tournament["players"]) / 2)
+
             try:
                 list(tournament["result"])[nb_match]
             except IndexError:
@@ -112,6 +122,7 @@ class ShowRounds:
 
     def __call__(self):
         tournament = self.db_tournament.table("tournaments").get(Query().id_tournament == int(self.id_input))
+        nb_match_max = 0
 
         for nb_round in range(tournament["nb_round"]):
 
@@ -119,12 +130,14 @@ class ShowRounds:
             for nb_match in range(int(len(tournament["players"]) / 2)):
                 try:
 
-                    winner = self.db_info_player.table("Players").get(Query().id == int(list(tournament["result"][
-                                                                                                 list(tournament[
-                                                                                                          "result"])[
-                                                                                                     nb_match]])[0]))
+                    if list(tournament["result"][list(tournament["result"])[nb_match]])[0] != "N":
+                        winner = self.db_info_player.table("Players").get(Query().id == int(list(tournament["result"][
+                                                                                            list(tournament["result"])[
+                                                                                                    nb_match]])[0]))
+                    else:
+                        winner = 'DRAW'
 
-                    list_match = [int(s) for s in str(list(tournament["result"].keys())[nb_match]).replace(
+                    list_match = [int(s) for s in str(list(tournament["result"].keys())[nb_match + nb_match_max]).replace(
                         '-', ' ').split() if s.isdigit()]
 
                     player1 = self.db_info_player.table("Players").get(Query().id == list_match[0])
@@ -134,11 +147,17 @@ class ShowRounds:
                     print(player1["surname"] + " " + player1["first_name"] + ' vs ' + player2["surname"] + " " +
                           player2["first_name"])
 
-                    print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
+                    if winner == 'DRAW':
+                        print('  winner : ' +  winner + "\n")
+                    else:
+                        print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
 
                 except IndexError:
                     print("(unfinished)")
                     break
+
+            nb_match_max = nb_match_max + int(len(tournament["players"]) / 2)
+
             try:
                 list(tournament["result"])[nb_match]
             except IndexError:
