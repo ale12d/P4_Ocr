@@ -88,7 +88,8 @@ class ShowMatchs:
                         winner = 'DRAW'
 
                     list_match = [int(s) for s in str(
-                        list(tournament["result"].keys())[nb_match + nb_match_max]).replace('-', ' ').split() if s.isdigit()]
+                        list(tournament["result"].keys())[nb_match + nb_match_max]).replace('-', ' ').split()
+                                  if s.isdigit()]
 
                     player1 = self.db_info_player.table("Players").get(Query().id == list_match[0])
 
@@ -98,7 +99,7 @@ class ShowMatchs:
                           player2["first_name"])
 
                     if winner == 'DRAW':
-                        print('  winner : ' +  winner + "\n")
+                        print('  winner : ' + winner + "\n")
                     else:
                         print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
 
@@ -137,8 +138,8 @@ class ShowRounds:
                     else:
                         winner = 'DRAW'
 
-                    list_match = [int(s) for s in str(list(tournament["result"].keys())[nb_match + nb_match_max]).replace(
-                        '-', ' ').split() if s.isdigit()]
+                    list_match = [int(s) for s in str(list(tournament["result"].keys(
+                        ))[nb_match + nb_match_max]).replace('-', ' ').split() if s.isdigit()]
 
                     player1 = self.db_info_player.table("Players").get(Query().id == list_match[0])
 
@@ -148,7 +149,7 @@ class ShowRounds:
                           player2["first_name"])
 
                     if winner == 'DRAW':
-                        print('  winner : ' +  winner + "\n")
+                        print('  winner : ' + winner + "\n")
                     else:
                         print('  winner : ' + winner["first_name"] + " " + winner["surname"] + "\n")
 
